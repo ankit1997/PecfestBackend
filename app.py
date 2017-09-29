@@ -1,3 +1,4 @@
+import string
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
@@ -18,6 +19,7 @@ pass_param(db)
 from models.event import Event
 from models.user import User
 from models.pecfestIds import PecfestIds
+from models.otps import OTPs
 
 ################################################################
 
@@ -202,11 +204,16 @@ def createUser():
 
 	newPecfestId = PecfestIds(pecfestId=pecfestId)
 
+	OTP = ''.join(random.choice(string.digits) for _ in range(6))
+	otp = OTPs(pecfestId=pecfestId,
+				otp=OTP)
+
 	curr_session = db.session
 	success = False
 	try:
 		curr_session.add(user)
 		curr_session.add(newPecfestId)
+		curr_session.add(otp)
 		curr_session.commit()
 		success = True
 	except:
@@ -214,29 +221,56 @@ def createUser():
 		curr_session.flush()
 
 	if success:
-		return jsonify({'ACK': 'SUCCESS'})
+		return jsonify({'ACK': 'SUCCESS', 'OTP': OTP})
 	return jsonify({'ACK': 'FAILED'})
 
 # Get user's details
-@app.route('/user/<string:userName>', methods=['GET'])
-def getUserDetails(userName):
+@app.route('/user/<string:pecfestId>', methods=['GET'])
+def getUserDetails(pecfestId):
 	userInfo = {}
-	user = User.query.filter_by(userName=userName).first()
+	user = User.query.filter_by(pecfestId=pecfestId).first()
 
 	if user == None:
 		userInfo["ACK"] = "FAILED"
 		return jsonify(userInfo)
 
 	userInfo["ACK"] = "SUCCESS"
-	userInfo["userName"] = user.userName
-	userInfo["name"] = user.name
-	userInfo["gender"] = user.gender
-	userInfo["email"] = user.email
-	userInfo["mobile"] = user.mobile
-	userInfo["probNum"] = user.probNum
-	userInfo["profileImg"] = user.profileImg
+	userInfo["pecfestId"] = pecfestId
+	userInfo["name"] = data["name"]
+	userInfo["college"] = data["college"]
+	userInfo["email"] = data["email"]
+	userInfo["mobile"] = data["mobile"]
+	userInfo["gender"] = data["gender"]
+	userInfo["accomodation"] = data["accomodation"]
 
 	return jsonify(userInfo)
+
+
+# verify user
+@app.route('/user/verify/<string:pecfestId>', methods=['GET'])
+def verifyUser(pecfestId):
+	otp = request.get_json()["OTP"]
+
+	user = OTPs.query.filter_by(pecfestId=pecfestId,
+								otp=otp).first()
+	if user:
+		curr_session = db.session
+		success = False
+		try:
+			curr_session.delete(user)
+			curr_session.commit()
+			success = True
+		except:
+			curr_session.rollback()
+			curr_session.flush()
+
+		if success:
+			return jsonify({'ACK': 'SUCCESS'})
+		else:
+			return jsonify({'ACK': 'FAILED'})
+	else:
+		return jsonify({'ACK': 'FAILED'})
+
 
 ################################################################
 #####################REGISTRATION###############################

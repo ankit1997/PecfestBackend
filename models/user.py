@@ -1,6 +1,9 @@
 from models.model import db
 
 class User(db.Model):
+	'''
+		Contain details of a user.
+	'''
 
 	__tablename__ = 'User'
 
@@ -17,7 +20,7 @@ class User(db.Model):
 	registration = db.relationship('Registration', backref='user', lazy=True)
 
 	def __repr__(self):
-		return 'User: <' + self.eventName + '>'
+		return 'User: <' + self.pecfestId + ':' + name + '>'
 
 	def as_dict(self):
 		return {c.name: getattr(self, c.name) for c in self.__tablename__.columns}

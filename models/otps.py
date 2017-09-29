@@ -1,16 +1,14 @@
 from models.model import db
 
-class PecfestIds(db.Model):
-	'''
-		Contains all registered pecfest IDs
-	'''
+class OTPs(db.Model):
 
-	__tablename__ = 'PecfestIds'
+	__tablename__ = 'OTPs'
 
   	pecfestId = db.Column(db.String(6), primary_key=True)
+  	otp = db.Column(db.String(6), nullable=False)
 
 	def __repr__(self):
-		return 'ID: <' + self.pecfestId + '>'
+		return 'ID: <' + self.pecfestId + ':' + otp + '>'
 
 	def as_dict(self):
 		return {c.name: getattr(self, c.name) for c in self.__tablename__.columns}
